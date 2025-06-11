@@ -31,3 +31,5 @@ object BarangApi {
         retrofit.create(BarangApiService::class.java)
     }
 }
+
+enum class ApiStatus { LOADING, SUCCESS}

@@ -5,13 +5,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.irvanmaulana0013.barangku.model.Barang
+import com.irvanmaulana0013.barangku.network.ApiStatus
 import com.irvanmaulana0013.barangku.network.BarangApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 class MainViewModel : ViewModel() {
 
     var data = mutableStateOf(emptyList<Barang>())
+        private set
+
+    var status = MutableStateFlow(ApiStatus.LOADING)
         private set
 
     init {
@@ -20,8 +25,10 @@ class MainViewModel : ViewModel() {
 
     private fun retrieveData() {
         viewModelScope.launch(Dispatchers.IO) {
+            status.value = ApiStatus.LOADING
             try {
                 data.value = BarangApi.service.getBarang("__admin__")
+                status.value = ApiStatus.SUCCESS
             } catch (e: Exception) {
                 Log.d("MainViewModel", "Failure: ${e.message}")
             }
