@@ -27,7 +27,9 @@ private val retrofit = Retrofit.Builder()
 
 interface BarangApiService {
     @GET("barangku")
-    suspend fun getBarang(): List<Barang>
+    suspend fun getBarang(
+        @Header("Authorization") userId: String
+    ): List<Barang>
 
     @Multipart
     @POST("barangku")
