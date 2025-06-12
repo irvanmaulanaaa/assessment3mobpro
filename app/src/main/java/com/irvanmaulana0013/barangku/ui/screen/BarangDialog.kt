@@ -1,6 +1,5 @@
 package com.irvanmaulana0013.barangku.ui.screen
 
-import android.content.res.Configuration
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -9,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Card
@@ -20,6 +20,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,22 +28,29 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.irvanmaulana0013.barangku.R
-import com.irvanmaulana0013.barangku.ui.theme.BarangkuTheme
+import com.irvanmaulana0013.barangku.model.Barang
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BarangDialog(
+    userId: String,
     bitmap: Bitmap?,
+    barang: Barang?,
+    viewModel: MainViewModel,
     onDismissRequest: () -> Unit,
-    onConfirmation: (String, String, String) -> Unit
+    onConfirmation: () -> Unit
 ) {
     var namaBarang by remember { mutableStateOf("") }
     var kategori by remember { mutableStateOf("") }
@@ -58,6 +66,12 @@ fun BarangDialog(
         stringResource(R.string.lainnya)
     )
 
+    LaunchedEffect(Unit) {
+        if (barang == null) return@LaunchedEffect
+        namaBarang = barang.namaBarang
+        kategori = barang.kategori
+        jumlah = barang.jumlah.toString()
+    }
 
     Dialog(onDismissRequest = { onDismissRequest() }) {
         Card(
@@ -68,16 +82,33 @@ fun BarangDialog(
                 modifier = Modifier.padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Image(
-                    bitmap = bitmap!!.asImageBitmap(),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxWidth().aspectRatio(1f)
-                )
+                if (bitmap != null) {
+                    Image(
+                        bitmap = bitmap!!.asImageBitmap(),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxWidth().aspectRatio(1f)
+                    )
+                }
+                else if (barang != null) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(barang.imageUrl)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = stringResource(R.string.gambar, barang.namaBarang),
+                        contentScale = ContentScale.Crop,
+                        placeholder = painterResource(id = R.drawable.loading_img),
+                        error = painterResource(id = R.drawable.broken_img),
+                        modifier = Modifier
+                            .size(250.dp)
+                            .padding(4.dp)
+                    )
+                }
                 OutlinedTextField(
                     value = namaBarang,
                     onValueChange = { namaBarang = it },
                     label = { Text(text = stringResource(R.string.nama_barang)) },
-                    maxLines = 1,
+                    singleLine = true,
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.Words,
                         imeAction = ImeAction.Next
@@ -124,7 +155,7 @@ fun BarangDialog(
                     value = jumlah,
                     onValueChange = { jumlah = it },
                     label = { Text(text = stringResource(R.string.jumlah)) },
-                    maxLines = 1,
+                    singleLine = true,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Done
@@ -142,7 +173,16 @@ fun BarangDialog(
                         Text(text = stringResource(R.string.batal))
                     }
                     OutlinedButton(
-                        onClick = { onConfirmation(namaBarang, kategori, jumlah) },
+                        onClick = {
+                            if (barang == null) {
+                                viewModel.saveData(userId, namaBarang, kategori, jumlah, bitmap!!)
+                                onConfirmation()
+                            }
+                            else {
+                                viewModel.editData(userId, barang.id, namaBarang, kategori, jumlah)
+                                onConfirmation()
+                            }
+                        },
                         enabled = namaBarang.isNotEmpty() &&
                                 kategori.isNotEmpty() && jumlah.isNotEmpty(),
                         modifier = Modifier.padding(8.dp)
@@ -152,18 +192,5 @@ fun BarangDialog(
                 }
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
-@Composable
-fun AddDialogPreview() {
-    BarangkuTheme {
-        BarangDialog(
-            bitmap = null,
-            onDismissRequest = {},
-            onConfirmation = {_, _, _ ->}
-        )
     }
 }

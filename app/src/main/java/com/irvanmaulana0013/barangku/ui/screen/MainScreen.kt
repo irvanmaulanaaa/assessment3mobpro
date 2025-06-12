@@ -15,14 +15,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -87,12 +91,15 @@ fun MainScreen() {
     val context = LocalContext.current
     val dataStore = UserDataStore(context)
     val user by dataStore.userFlow.collectAsState(User())
+    var selectedBarang by remember { mutableStateOf<Barang?>(null) }
 
     val viewModel: MainViewModel = viewModel()
     val errorMessage by viewModel.errorMessage
 
     var showDialog by remember { mutableStateOf(false) }
     var showBarangDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
 
     var bitmap: Bitmap? by remember { mutableStateOf(null) }
     val launcher = rememberLauncherForActivityResult(CropImageContract()) {
@@ -130,14 +137,19 @@ fun MainScreen() {
         },
         floatingActionButton = {
             FloatingActionButton(onClick = {
-                val options = CropImageContractOptions(
-                    null, CropImageOptions(
-                        imageSourceIncludeGallery = false,
-                        imageSourceIncludeCamera = true,
-                        fixAspectRatio = true
+                if (user.email.isEmpty()) {
+                    Toast.makeText(context, R.string.login, Toast.LENGTH_LONG).show()
+                }
+                else {
+                    val options = CropImageContractOptions(
+                        null, CropImageOptions(
+                            imageSourceIncludeGallery = false,
+                            imageSourceIncludeCamera = true,
+                            fixAspectRatio = true
+                        )
                     )
-                )
-                launcher.launch(options)
+                    launcher.launch(options)
+                }
             }) {
                 Icon(
                     imageVector = Icons.Default.Add,
@@ -146,7 +158,19 @@ fun MainScreen() {
             }
         }
     ) { innerPadding ->
-        ScreenContent(viewModel, user.email, Modifier.padding(innerPadding))
+        ScreenContent(
+            viewModel = viewModel,
+            userId = user.email,
+            modifier = Modifier.padding(innerPadding),
+            onShowDelete = { barang ->
+                selectedBarang = barang
+                showDeleteDialog = true
+            },
+            onShowEdit = { barang ->
+                selectedBarang = barang
+                showEditDialog = true
+            }
+        )
 
         if (showDialog) {
             ProfilDialog(
@@ -159,22 +183,52 @@ fun MainScreen() {
 
         if (showBarangDialog) {
             BarangDialog(
+                userId = user.email,
+                viewModel = viewModel,
                 bitmap = bitmap,
-                onDismissRequest = { showBarangDialog = false }) { namaBarang, kategori, jumlah ->
-                viewModel.saveData(user.email, namaBarang, kategori, jumlah, bitmap!!)
-                showBarangDialog = false
-            }
+                barang = null,
+                onDismissRequest = { showBarangDialog = false },
+                onConfirmation = {
+                    showBarangDialog = false
+                }
+            )
+        }
+
+        if (showEditDialog) {
+            BarangDialog(
+                userId = user.email,
+                viewModel = viewModel,
+                bitmap = null,
+                barang = selectedBarang,
+                onDismissRequest = { showEditDialog = false },
+                onConfirmation = {
+                    showEditDialog = false
+                }
+            )
         }
 
         if (errorMessage != null) {
             Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
             viewModel.clearMessage()
         }
+
+        if (showDeleteDialog) {
+            DisplayAlertDialog(onDismissRequest = { showDeleteDialog = false }) {
+                selectedBarang?.let { viewModel.deleteData(user.email, it.id) }
+                showDeleteDialog = false
+            }
+        }
     }
 }
 
 @Composable
-fun ScreenContent(viewModel: MainViewModel, userId: String, modifier: Modifier = Modifier) {
+fun ScreenContent(
+    viewModel: MainViewModel,
+    userId: String,
+    modifier: Modifier = Modifier,
+    onShowDelete: (Barang) -> Unit,
+    onShowEdit: (Barang) -> Unit
+) {
     val data by viewModel.data
     val status by viewModel.status.collectAsState()
 
@@ -193,12 +247,29 @@ fun ScreenContent(viewModel: MainViewModel, userId: String, modifier: Modifier =
         }
 
         ApiStatus.SUCCESS -> {
-            LazyVerticalGrid(
-                modifier = modifier.fillMaxSize().padding(4.dp),
-                columns = GridCells.Fixed(2),
-                contentPadding = PaddingValues(bottom = 80.dp)
-            ) {
-                items(data) { ListItem(barang = it ) }
+            if (data.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = stringResource(id = R.string.data_kosong))
+                }
+            }
+            else {
+                LazyVerticalStaggeredGrid(
+                    modifier = modifier.fillMaxSize().padding(4.dp),
+                    columns = StaggeredGridCells.Fixed(2),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    contentPadding = PaddingValues(bottom = 84.dp)
+                ) {
+                    items(data) {
+                        ListItem(
+                            barang = it,
+                            onDelete = { onShowDelete(it) },
+                            onEdit = { onShowEdit(it) }
+                        )
+                    }
+                }
             }
         }
 
@@ -222,9 +293,11 @@ fun ScreenContent(viewModel: MainViewModel, userId: String, modifier: Modifier =
 }
 
 @Composable
-fun ListItem(barang: Barang) {
+fun ListItem(barang: Barang, onEdit: () -> Unit, onDelete: () -> Unit) {
     Column(
-        modifier = Modifier.padding(4.dp).border(1.dp, Color.Gray)
+        modifier = Modifier
+            .padding(4.dp)
+            .border(1.dp, Color.Gray)
     ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
@@ -235,26 +308,56 @@ fun ListItem(barang: Barang) {
             contentScale = ContentScale.Crop,
             placeholder = painterResource(id = R.drawable.loading_img),
             error = painterResource(id = R.drawable.broken_img),
-            modifier = Modifier.fillMaxWidth().padding(4.dp)
-        )
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(4.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f)
                 .padding(4.dp)
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = barang.namaBarang,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = barang.kategori,
-                fontStyle = FontStyle.Italic,
-                fontSize = 14.sp
-            )
-            Text(
-                text = barang.jumlah.toString(),
-                fontStyle = FontStyle.Italic,
-                fontSize = 14.sp
-            )
+            Column(
+                modifier = Modifier
+                    .padding(start = 4.dp)
+                    .weight(1f)
+            ) {
+                Text(
+                    text = barang.namaBarang,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = barang.kategori,
+                    fontStyle = FontStyle.Italic,
+                    fontSize = 14.sp
+                )
+                Text(
+                    text = barang.jumlah.toString(),
+                    fontStyle = FontStyle.Italic,
+                    fontSize = 14.sp
+                )
+            }
+            Column {
+                IconButton(
+                    onClick = { onEdit() }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = stringResource(R.string.edit)
+                    )
+                }
+                IconButton(
+                    onClick = { onDelete() }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = stringResource(R.string.hapus)
+                    )
+                }
+            }
         }
     }
 }

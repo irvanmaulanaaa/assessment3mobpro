@@ -8,11 +8,14 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Part
+import retrofit2.http.Path
 
 private const val BASE_URL = "https://barangku-api.zero-dev.my.id/"
 
@@ -39,6 +42,22 @@ interface BarangApiService {
         @Part("kategori") kategori: RequestBody,
         @Part("jumlah") jumlah: RequestBody,
         @Part image: MultipartBody.Part
+    ): OpStatus
+
+    @DELETE("barangku/{id}")
+    suspend fun delete(
+        @Header("Authorization") userId: String,
+        @Path("id") id: Int
+    ): OpStatus
+
+    @Multipart
+    @PUT("barangku/{id}")
+    suspend fun putBarang(
+        @Header("Authorization") userId: String,
+        @Path("id") id: Int,
+        @Part("namaBarang") namaBarang: RequestBody,
+        @Part("kategori") kategori: RequestBody,
+        @Part("jumlah") jumlah: RequestBody
     ): OpStatus
 }
 

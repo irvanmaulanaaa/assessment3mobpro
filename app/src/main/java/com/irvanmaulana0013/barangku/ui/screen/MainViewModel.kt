@@ -68,6 +68,51 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    fun deleteData(userId: String, id: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val result = BarangApi.service.delete(
+                    userId,
+                    id
+                )
+                if (result.status == "success")
+                    retrieveData(userId)
+                else
+                    throw Exception(result.message)
+            } catch (e: Exception) {
+                Log.d("MainViewModel", "Failure: ${e.message}")
+            }
+        }
+    }
+
+    fun editData(
+        userId: String,
+        barangId: Int,
+        namaBarang: String,
+        kategori: String,
+        jumlah: String
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val result = BarangApi.service.putBarang(
+                    userId,
+                    barangId,
+                    namaBarang.toRequestBody("text/plain".toMediaTypeOrNull()),
+                    kategori.toRequestBody("text/plain".toMediaTypeOrNull()),
+                    jumlah.toRequestBody("text/plain".toMediaTypeOrNull())
+                )
+
+                if (result.status == "success")
+                    retrieveData(userId)
+                else
+                    throw Exception(result.message)
+            } catch (e: Exception) {
+                Log.d("MainViewModel", "Failure: ${e.message}")
+                errorMessage.value = "Error: ${e.message}"
+            }
+        }
+    }
+
     private fun Bitmap.toMultipartBody(): MultipartBody.Part {
         val stream = ByteArrayOutputStream()
         compress(Bitmap.CompressFormat.JPEG, 80, stream)

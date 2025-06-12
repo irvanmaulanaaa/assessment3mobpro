@@ -18,4 +18,9 @@
     <string name="pakaian">Pakaian</string>
     <string name="kendaraan">Kendaraan</string>
     <string name="lainnya">Lainnya</string>
+    <string name="login">Anda harus login terlebih dahulu</string>
+    <string name="edit">Edit</string>
+    <string name="hapus">Hapus</string>
+    <string name="pesan_hapus">Hapus data barang ini?</string>
+    <string name="data_kosong">Belum ada data barang..</string>
 </resources>
