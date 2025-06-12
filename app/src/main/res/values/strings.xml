@@ -7,4 +7,15 @@
     <string name="tutup">Tutup</string>
     <string name="logout">Logout</string>
     <string name="tambah_barang">Tambah barang</string>
+    <string name="nama_barang">Nama barang</string>
+    <string name="kategori">Kategori</string>
+    <string name="jumlah">Jumlah</string>
+    <string name="batal">Batal</string>
+    <string name="simpan">Simpan</string>
+    <string name="elektronik">Elektronik</string>
+    <string name="peralatan">Peralatan</string>
+    <string name="perlengkapan">Perlengkapan</string>
+    <string name="pakaian">Pakaian</string>
+    <string name="kendaraan">Kendaraan</string>
+    <string name="lainnya">Lainnya</string>
 </resources>
