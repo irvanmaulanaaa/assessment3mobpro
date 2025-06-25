@@ -19,8 +19,11 @@
     <string name="lainnya">Other</string>
     <string name="login">You must login first</string>
     <string name="edit">Edit</string>
+    <string name="kembali">Back</string>
     <string name="hapus">Delete</string>
     <string name="pesan_hapus">Delete this item\'s data?</string>
     <string name="data_kosong">There is no item data yet..</string>
     <string name="error">Failed to load data.. Connection error.</string>
+    <string name="tentang_aplikasi">About the application</string>
+    <string name="deskripsi">My Goods is an application that helps users manage all the items they own easily and practically. Through this application, users can take photos of each item, then add important information such as the name of the item, category, and quantity. That way, users can have a neat and easy-to-understand list of personal items.</string>
 </resources>

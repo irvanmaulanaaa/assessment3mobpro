@@ -22,6 +22,13 @@
     <string name="lainnya">Lainnya</string>
     <string name="login">Anda harus login terlebih dahulu</string>
     <string name="edit">Edit</string>
+    <string name="kembali">Kembali</string>
     <string name="hapus">Hapus</string>
     <string name="pesan_hapus">Hapus data barang ini?</string>
+    <string name="tentang_aplikasi">Tentang aplikasi</string>
+    <string name="deskripsi">Barangku adalah aplikasi yang membantu pengguna mengelola
+        semua barang yang mereka miliki dengan mudah dan praktis. Melalui aplikasi ini,
+        pengguna bisa mengambil foto setiap barang, lalu menambahkan informasi penting
+        seperti nama barang, kategori, dan jumlahnya. Dengan begitu, pengguna bisa memiliki
+        daftar barang-barang pribadi yang rapi dan mudah dipahami.</string>
 </resources>

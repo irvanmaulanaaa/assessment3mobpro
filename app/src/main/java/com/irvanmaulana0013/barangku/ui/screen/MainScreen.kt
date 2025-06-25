@@ -27,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -65,6 +66,9 @@ import androidx.credentials.GetCredentialResponse
 import androidx.credentials.exceptions.ClearCredentialException
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.canhub.cropper.CropImageContract
@@ -78,6 +82,7 @@ import com.irvanmaulana0013.barangku.BuildConfig
 import com.irvanmaulana0013.barangku.R
 import com.irvanmaulana0013.barangku.model.Barang
 import com.irvanmaulana0013.barangku.model.User
+import com.irvanmaulana0013.barangku.navigation.Screen
 import com.irvanmaulana0013.barangku.network.ApiStatus
 import com.irvanmaulana0013.barangku.network.UserDataStore
 import com.irvanmaulana0013.barangku.ui.theme.BarangkuTheme
@@ -87,7 +92,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen() {
+fun MainScreen(navController: NavHostController) {
     val context = LocalContext.current
     val dataStore = UserDataStore(context)
     val user by dataStore.userFlow.collectAsState(User())
@@ -129,6 +134,15 @@ fun MainScreen() {
                         Icon(
                             painter = painterResource(R.drawable.account_circle),
                             contentDescription = stringResource(R.string.profil),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    IconButton(onClick = {
+                        navController.navigate(Screen.About.route)
+                    }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Info,
+                            contentDescription = stringResource(R.string.tentang_aplikasi),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -439,6 +453,6 @@ private fun getCroppedImage(
 @Composable
 fun MainScreenPreview() {
     BarangkuTheme {
-        MainScreen()
+        MainScreen(rememberNavController())
     }
 }
